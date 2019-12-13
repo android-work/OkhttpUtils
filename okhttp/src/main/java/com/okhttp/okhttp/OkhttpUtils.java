@@ -4,14 +4,18 @@ import android.os.Handler;
 
 import com.google.gson.Gson;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.URLEncoder;
 import java.util.Map;
 
 import okhttp3.Call;
 import okhttp3.Callback;
+import okhttp3.MediaType;
+import okhttp3.MultipartBody;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
+import okhttp3.RequestBody;
 import okhttp3.Response;
 
 /**
@@ -93,6 +97,13 @@ public class OkhttpUtils {
 
     /**
      * get请求
+     *
+     * @param url "接口地址"
+     * @param params "参数拼接集合"
+     * @param tag "用户取消网络请求的标记"
+     * @param tClass "请求结果的序列化的字节码对象"
+     * @param callback "请求成功与否的回调方法"
+     *
      * */
     public void getHttp(String url, Map<String, String> params, String tag, Class tClass, HttpRequestCallback callback){
 
@@ -118,16 +129,16 @@ public class OkhttpUtils {
             }
 
 
-        LogUtils.loge("url:"+url);
+        LogUtils.loge("url老客户回购:"+url);
         requestBuilder.get();
         requestBuilder.url(url);
         requestBuilder.tag(tag);
 
-        OkHttpClient build = builder.build();
+//        OkHttpClient build = builder.build();
 
         Request request = requestBuilder.build();
 
-        build.newCall(request).enqueue(new Callback() {
+        okHttpClient.newCall(request).enqueue(new Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
                 handThread(callback,false,e.toString());
@@ -140,7 +151,7 @@ public class OkhttpUtils {
                 try {
                     body = response.body().string();
 
-                    LogUtils.loge(body);
+                    LogUtils.loge("getBody:"+body);
                     Object o = new Gson().fromJson(body, tClass);
                     handThread(callback,true,o);
                 }catch (Exception e){
@@ -149,8 +160,76 @@ public class OkhttpUtils {
 
             }
         });
+    }
 
 
+    /**
+     * post 、 put 请求
+     *
+     * @param url "请求地址"
+     * @param methed "请求方式"
+     * @param body "请求body"
+     * @param tag "取消请求的标记"
+     * @param paramsMap "上传参数的map集合"
+     * @param fileMap "上传图片的map集合"
+     * @param tClass "请求结果序列化字节码对象"
+     * @param callback "请求结果的回调方法"
+     *
+     * */
+    public void multabNetwork(String url, String methed, String body, String tag, Map<String,String> paramsMap, Map<String, File> fileMap, Class tClass, HttpRequestCallback callback){
+
+        MultipartBody.Builder multipartBody = new MultipartBody.Builder().setType(MultipartBody.FORM);
+
+        //上传图片
+        if ((fileMap != null) || (paramsMap != null)){
+
+            for (Map.Entry<String,File> entry : fileMap.entrySet()){
+
+                String key = entry.getKey();
+                File value = entry.getValue();
+                if (value == null) continue;
+                RequestBody fileBody = RequestBody.create(MediaType.parse("image/jpg;charset=utf-8"), value);
+                multipartBody.addFormDataPart(key,value.getName(),fileBody);
+
+            }
+
+            for (Map.Entry<String,String> entry : paramsMap.entrySet()){
+
+                String key = entry.getKey();
+                String value = entry.getValue();
+                multipartBody.addFormDataPart(key,value);
+            }
+
+            requestBuilder.method(methed,multipartBody.build());
+        }
+
+        //上传json body
+        if (body != null){
+            RequestBody requestBody = RequestBody.create(MediaType.parse("application/json; charset=utf-8"), body);
+            requestBuilder.method(methed,requestBody);
+        }
+        requestBuilder.tag(tag);
+        Request request = requestBuilder.build();
+        okHttpClient.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+                handThread(callback,false,e.toString());
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                String body = "";
+                try{
+                    body = response.body().string();
+
+                    LogUtils.loge(methed +"Body:"+body);
+                    Object o = new Gson().fromJson(body, tClass);
+                    handThread(callback,true,o);
+                }catch (Exception e){
+                    e.printStackTrace();
+                }
+            }
+        });
     }
 
 
@@ -175,11 +254,6 @@ public class OkhttpUtils {
         }
     }
 
-
-
-
-
-
     /**
      *  线程切换
      * */
@@ -188,7 +262,7 @@ public class OkhttpUtils {
         if (isSuc){
             handler.post(()->callback.requestSuccess(o));
         }else{
-            handler.post(()->callback.requestFail(o.toString()));
+            handler.post(()->callback.requestFail((String)o));
         }
     }
 }

@@ -1,6 +1,8 @@
 package com.okhttp.okhttp;
 
-import android.text.TextUtils;
+import android.os.Handler;
+
+import com.google.gson.Gson;
 
 import java.io.IOException;
 import java.net.URLEncoder;
@@ -24,7 +26,9 @@ public class OkhttpUtils {
     private static OkhttpUtils mOkhttp;
     private OkHttpClient.Builder builder;
     private Request.Builder requestBuilder;
-    private String baseUrl;
+    private String baseUrl = "";
+    private Handler handler;
+    private OkHttpClient okHttpClient;
 
     private OkhttpUtils(){initOkhttp();}
 
@@ -52,11 +56,23 @@ public class OkhttpUtils {
     }
 
     /**
+     * 配置全局的handler
+     * */
+    public void setHandler(Handler handler){
+
+        this.handler = handler;
+    }
+
+    /**
      * 初始化okhttp
      * */
     private void initOkhttp(){
 
-        builder = new OkHttpClient.Builder();
+//        builder = new OkHttpClient.Builder();
+
+        okHttpClient = new OkHttpClient();
+
+        builder = okHttpClient.newBuilder();
 
         requestBuilder = new Request.Builder();
     }
@@ -76,32 +92,36 @@ public class OkhttpUtils {
     }
 
     /**
-     * 请求
+     * get请求
      * */
-    public void getHttp(String url, Map<String,String> params){
+    public void getHttp(String url, Map<String, String> params, String tag, Class tClass, HttpRequestCallback callback){
 
         StringBuffer sbUrl = new StringBuffer();
-        try {
+
             if (params != null && params.size() != 0) {
-                //拼接url
-                int index = 0;
-                for (String key : params.keySet()) {
-                    if (index > 0)
-                        sbUrl.append("&");
+                try {
+                    //拼接url
+                    int index = 0;
+                    for (String key : params.keySet()) {
+                        if (index > 0)
+                            sbUrl.append("&");
 
-                    sbUrl.append(String.format("%s=%s", key, URLEncoder.encode(params.get(key), "utf-8")));
+                        sbUrl.append(String.format("%s=%s", key, URLEncoder.encode(params.get(key), "utf-8")));
 
-                    index++;
+                        index++;
+                    }
+                    url = String.format("%s%s?%s",baseUrl,url,sbUrl.toString());
+
+                }catch (Exception e){
+                    e.printStackTrace();
                 }
             }
 
-            url = String.format("%s%s?%s",baseUrl,url,sbUrl.toString());
-        }catch (Exception e){
-            e.printStackTrace();
-        }
 
+        LogUtils.loge("url:"+url);
         requestBuilder.get();
         requestBuilder.url(url);
+        requestBuilder.tag(tag);
 
         OkHttpClient build = builder.build();
 
@@ -110,16 +130,65 @@ public class OkhttpUtils {
         build.newCall(request).enqueue(new Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
-
+                handThread(callback,false,e.toString());
+                call.cancel();
             }
 
             @Override
             public void onResponse(Call call, Response response) {
+                String body = "";
+                try {
+                    body = response.body().string();
 
-                
+                    LogUtils.loge(body);
+                    Object o = new Gson().fromJson(body, tClass);
+                    handThread(callback,true,o);
+                }catch (Exception e){
+                    e.printStackTrace();
+                }
+
             }
         });
 
 
+    }
+
+
+    /**
+     * 取消网络请求
+     * */
+    public void cancelTag(String tag)
+    {
+        for (Call call : okHttpClient.dispatcher().queuedCalls())
+        {
+            if (tag.equals(call.request().tag()))
+            {
+                call.cancel();
+            }
+        }
+        for (Call call : okHttpClient.dispatcher().runningCalls())
+        {
+            if (tag.equals(call.request().tag()))
+            {
+                call.cancel();
+            }
+        }
+    }
+
+
+
+
+
+
+    /**
+     *  线程切换
+     * */
+    private void handThread(HttpRequestCallback callback, boolean isSuc, Object o){
+
+        if (isSuc){
+            handler.post(()->callback.requestSuccess(o));
+        }else{
+            handler.post(()->callback.requestFail(o.toString()));
+        }
     }
 }

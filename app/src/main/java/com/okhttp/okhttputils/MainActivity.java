@@ -3,6 +3,11 @@ package com.okhttp.okhttputils;
 
 import android.app.Activity;
 import android.os.Bundle;
+import android.os.Handler;
+
+import com.okhttp.okhttp.HttpRequestCallback;
+import com.okhttp.okhttp.LogUtils;
+import com.okhttp.okhttp.OkhttpUtils;
 
 public class MainActivity extends Activity {
 
@@ -10,5 +15,22 @@ public class MainActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        OkhttpUtils.getInstance().setHandler(new Handler());
+//        OkhttpUtils.getInstance().cancelTag("111");
+        LogUtils.isLoge(true,false,false,false);
+        OkhttpUtils.getInstance().getRequestBuilder().addHeader("X-APP-PACKAGE-NAME","com.apb");
+        OkhttpUtils.getInstance().getHttp("http://rest.vn.starblingbling.com/v2/index/homePageInfo", null, "111",
+                HomeProdctB.class, new HttpRequestCallback() {
+                    @Override
+                    public void requestSuccess(Object o) {
+
+                    }
+
+                    @Override
+                    public void requestFail(String error) {
+
+                    }
+                });
     }
 }

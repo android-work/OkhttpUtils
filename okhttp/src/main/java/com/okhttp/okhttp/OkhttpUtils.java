@@ -121,20 +121,17 @@ public class OkhttpUtils {
 
                         index++;
                     }
-                    url = String.format("%s%s?%s",baseUrl,url,sbUrl.toString());
-
                 }catch (Exception e){
                     e.printStackTrace();
                 }
             }
 
+        url = String.format("%s%s?%s",baseUrl,url,sbUrl.toString());
 
         LogUtils.loge("url老客户回购:"+url);
         requestBuilder.get();
         requestBuilder.url(url);
         requestBuilder.tag(tag);
-
-//        OkHttpClient build = builder.build();
 
         Request request = requestBuilder.build();
 

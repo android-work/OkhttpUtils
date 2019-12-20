@@ -124,9 +124,11 @@ public class OkhttpUtils {
                 }catch (Exception e){
                     e.printStackTrace();
                 }
+
+                url = String.format("%s?%s",url,sbUrl.toString());
             }
 
-        url = String.format("%s%s?%s",baseUrl,url,sbUrl.toString());
+        url = String.format("%s%s",baseUrl,url);
 
         LogUtils.loge("url老客户回购:"+url);
         requestBuilder.get();

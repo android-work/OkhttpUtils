@@ -6,7 +6,6 @@ import com.google.gson.Gson;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URLEncoder;
 import java.util.Map;
 
@@ -145,15 +144,8 @@ public class OkhttpUtils {
 
             @Override
             public void onResponse(Call call, Response response) {
+                String body = "";
                 try {
-                    if (tClass == null){
-                        InputStream inputStream = response.body().byteStream();
-                        handThread(callback,true,inputStream);
-                        return;
-                    }
-
-                    String body = "";
-
                     body = response.body().string();
 
                     LogUtils.loge("getBody:"+body);
@@ -214,6 +206,7 @@ public class OkhttpUtils {
             requestBuilder.method(methed,requestBody);
         }
         requestBuilder.tag(tag);
+        requestBuilder.url(url);
         Request request = requestBuilder.build();
         okHttpClient.newCall(request).enqueue(new Callback() {
             @Override
@@ -223,16 +216,8 @@ public class OkhttpUtils {
 
             @Override
             public void onResponse(Call call, Response response) throws IOException {
-
+                String body = "";
                 try{
-
-                    if (tClass == null){
-                        InputStream inputStream = response.body().byteStream();
-                        handThread(callback,true,inputStream);
-                        return;
-                    }
-
-                    String body = "";
                     body = response.body().string();
 
                     LogUtils.loge(methed +"Body:"+body);
@@ -243,6 +228,29 @@ public class OkhttpUtils {
                 }
             }
         });
+    }
+
+    /**
+     * 下载图片
+     * */
+    public void downFile(String url,HttpRequestCallback httpRequestCallback){
+
+        OkHttpClient okHttpClient = new OkHttpClient();
+        Request.Builder builder = new Request.Builder();
+        Request request = builder.build();
+        okHttpClient.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+                handThread(httpRequestCallback,false,e.toString());
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                handThread(httpRequestCallback,true,response.body().byteStream());
+            }
+        });
+
+
     }
 
 

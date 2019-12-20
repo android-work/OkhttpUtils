@@ -10,7 +10,7 @@ allprojects {
 	}
   
   dependencies {
-	        implementation 'com.github.android-work:OkhttpUtils:v1.0.5'
+	        implementation 'com.github.android-work:OkhttpUtils:v1.0.6'
 	}
 
 封装okhttp框架

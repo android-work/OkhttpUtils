@@ -208,7 +208,7 @@ public class OkhttpUtils {
             requestBuilder.method(methed,requestBody);
         }
         requestBuilder.tag(tag);
-        requestBuilder.url(url);
+        requestBuilder.url(baseUrl+url);
         Request request = requestBuilder.build();
         okHttpClient.newCall(request).enqueue(new Callback() {
             @Override
@@ -222,7 +222,7 @@ public class OkhttpUtils {
                 try{
                     body = response.body().string();
 
-                    LogUtils.loge(methed +"Body:"+body);
+                    LogUtils.loge(methed +":Body:"+body);
                     Object o = new Gson().fromJson(body, tClass);
                     handThread(callback,true,o);
                 }catch (Exception e){

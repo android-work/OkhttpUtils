@@ -6,6 +6,7 @@ import com.google.gson.Gson;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URLEncoder;
 import java.util.Map;
 
@@ -144,8 +145,15 @@ public class OkhttpUtils {
 
             @Override
             public void onResponse(Call call, Response response) {
-                String body = "";
                 try {
+                    if (tClass == null){
+                        InputStream inputStream = response.body().byteStream();
+                        handThread(callback,true,inputStream);
+                        return;
+                    }
+
+                    String body = "";
+
                     body = response.body().string();
 
                     LogUtils.loge("getBody:"+body);
@@ -215,8 +223,16 @@ public class OkhttpUtils {
 
             @Override
             public void onResponse(Call call, Response response) throws IOException {
-                String body = "";
+
                 try{
+
+                    if (tClass == null){
+                        InputStream inputStream = response.body().byteStream();
+                        handThread(callback,true,inputStream);
+                        return;
+                    }
+
+                    String body = "";
                     body = response.body().string();
 
                     LogUtils.loge(methed +"Body:"+body);

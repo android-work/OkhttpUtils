@@ -237,6 +237,7 @@ public class OkhttpUtils {
 
         OkHttpClient okHttpClient = new OkHttpClient();
         Request.Builder builder = new Request.Builder();
+        builder.url(url);
         Request request = builder.build();
         okHttpClient.newCall(request).enqueue(new Callback() {
             @Override

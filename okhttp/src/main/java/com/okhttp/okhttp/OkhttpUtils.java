@@ -182,21 +182,26 @@ public class OkhttpUtils {
         //上传图片
         if ((fileMap != null) || (paramsMap != null)){
 
-            for (Map.Entry<String,File> entry : fileMap.entrySet()){
+            if (fileMap != null) {
+                for (Map.Entry<String, File> entry : fileMap.entrySet()) {
 
-                String key = entry.getKey();
-                File value = entry.getValue();
-                if (value == null) continue;
-                RequestBody fileBody = RequestBody.create(MediaType.parse("image/jpg;charset=utf-8"), value);
-                multipartBody.addFormDataPart(key,value.getName(),fileBody);
+                    String key = entry.getKey();
+                    File value = entry.getValue();
+                    if (value == null) continue;
+                    RequestBody fileBody = RequestBody.create(MediaType.parse("image/jpg;charset=utf-8"), value);
+                    multipartBody.addFormDataPart(key, value.getName(), fileBody);
 
+                    LogUtils.loge("file:"+key+"::::value:"+value.getName());
+                }
             }
 
-            for (Map.Entry<String,String> entry : paramsMap.entrySet()){
+            if (paramsMap != null) {
+                for (Map.Entry<String, String> entry : paramsMap.entrySet()) {
 
-                String key = entry.getKey();
-                String value = entry.getValue();
-                multipartBody.addFormDataPart(key,value);
+                    String key = entry.getKey();
+                    String value = entry.getValue();
+                    multipartBody.addFormDataPart(key, value);
+                }
             }
 
             requestBuilder.method(methed,multipartBody.build());
@@ -204,6 +209,7 @@ public class OkhttpUtils {
 
         //上传json body
         if (body != null){
+            LogUtils.loge("body:"+body);
             RequestBody requestBody = RequestBody.create(MediaType.parse("application/json; charset=utf-8"), body);
             requestBuilder.method(methed,requestBody);
         }
